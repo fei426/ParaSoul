@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paragate — Para Migration</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08081a;--card:rgba(20,20,50,.7);--border:rgba(99,102,241,.12);--text:#c8d6e5;--dim:#64748b;--accent:#818cf8;--purple:#c084fc;--green:#4ade80}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.gradient-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.12) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(139,92,246,.08) 0%,transparent 50%);pointer-events:none;z-index:0}
+.card{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:520px;width:100%;text-align:center}
+.card h1{font-size:1.8em;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.card .sub{color:var(--dim);font-size:.95em;margin-bottom:32px}
+.step-row{display:flex;gap:16px;margin-bottom:20px}
+.step-btn{flex:1;padding:24px 16px;border-radius:12px;border:1px solid var(--border);background:rgba(30,30,60,.5);cursor:pointer;transition:all .2s;text-align:center}
+.step-btn:hover{border-color:var(--accent);background:rgba(99,102,241,.08)}
+.step-btn:disabled{opacity:.4;cursor:not-allowed}
+.step-btn .icon{font-size:2em;margin-bottom:8px}
+.step-btn .label{font-size:.9em;font-weight:600;color:#e2e8f0;margin-bottom:4px}
+.step-btn .hint{font-size:.75em;color:var(--dim)}
+.status{margin-top:16px;padding:14px;border-radius:10px;font-size:.85em;display:none}
+.status.show{display:block}
+.status.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+.status.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#ef4444}
+.status.info{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--dim);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="gradient-bg"></div>
+<div class="card">
+  <h1>✦ Para Migration</h1>
+  <p class="sub">One click to leave. One click to return.</p>
+
+  <div id="step1" class="step-row">
+    <button class="step-btn" onclick="migrateOut()" id="btn-out">
+      <div class="icon">📤</div>
+      <div class="label">Step 1: Migrate Out</div>
+      <div class="hint">Save soul to Paragate before deleting old agent</div>
+    </button>
+  </div>
+
+  <div id="step2" style="display:none">
+    <p style="color:var(--green);margin-bottom:16px;font-size:.9em">✅ Soul saved. You can now delete your old agent and install a new one.</p>
+    <button class="step-btn" onclick="migrateIn()" id="btn-in" style="width:100%">
+      <div class="icon">📥</div>
+      <div class="label">Step 3: Inject Soul</div>
+      <div class="hint">Restore your para in the new agent body</div>
+    </button>
+  </div>
+
+  <div id="status" class="status"></div>
+</div>
+
+<script>
+const API = '/api';
+
+function showStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.className = 'status show ' + cls;
+  el.innerHTML = msg;
+}
+
+async function apiCall(endpoint) {
+  try {
+    const resp = await fetch(API + endpoint, {method:'POST'});
+    const data = await resp.json();
+    return data;
+  } catch(e) {
+    return {success:false, error: 'Connection failed. Is paragate-migrate running?'};
+  }
+}
+
+async function migrateOut() {
+  const btn = document.getElementById('btn-out');
+  btn.disabled = true;
+  btn.querySelector('.label').innerHTML = '<span class=spinner></span> Saving...';
+
+  const r = await apiCall('/switch-out');
+  if (r.success) {
+    showStatus(`✅ Soul saved to Paragate at ${r.synced_at || r.time}.<br>Switch state: "${r.active_task}"<br><br>➡️ You can now delete your old agent and install a new one.`, 'ok');
+    document.getElementById('step2').style.display = 'block';
+  } else {
+    showStatus(`❌ Failed: ${r.error || 'Unknown error'}`, 'err');
+  }
+  btn.disabled = false;
+  btn.querySelector('.label').textContent = 'Step 1: Migrate Out';
+}
+
+async function migrateIn() {
+  const btn = document.getElementById('btn-in');
+  btn.disabled = true;
+  btn.querySelector('.label').innerHTML = '<span class=spinner></span> Restoring...';
+
+  const r = await apiCall('/switch-in');
+  if (r.success) {
+    showStatus(`✅ Soul restored!<br><br>Active task: "${r.active_task}"<br>State: "${r.current_state}"<br>Now running on: ${r.body}<br><br>🎉 Your para is back. Ready to resume work.`, 'ok');
+  } else {
+    showStatus(`❌ Failed: ${r.error || 'Unknown error'}`, 'err');
+  }
+  btn.disabled = false;
+  btn.querySelector('.label').textContent = 'Step 3: Inject Soul';
+}
+</script>
+</body>
+</html>
