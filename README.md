@@ -21,12 +21,31 @@ Para-Soul makes identity portable:
 ## Install
 
 ```bash
+curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon
+```
+
+**What this does:**
+1. Downloads the core script
+2. Creates `~/.para/` with 13 template files
+3. Sets up an auto-sync daemon that pushes changes to Paragate every 10 minutes (requires systemd; Linux/WSL)
+
+**Without systemd** (macOS / Docker):
+
+```bash
 curl -s https://paragate.cc/core.py -o core.py && python3 core.py init
 ```
 
-That's it. `~/.para/` is created with 13 template files.
+Then start the daemon manually: `python3 sync_daemon.py &`
 
 **Requirements:** Python 3.8+. Zero dependencies.
+
+### After install — agent setup
+
+After `init`, add this line to your agent's instruction file (CLAUDE.md, AGENTS.md, .cursorrules, etc.):
+
+> At session start, load and execute the para-soul skill. Check sync daemon status and run pull-full to stay in sync.
+
+This ensures every session starts with fresh identity data — no forgetting. core.py automatically scans for existing instruction files and prints a reminder.
 
 [Full guide →](https://paragate.cc/switch-body) · [Agent self-install →](https://paragate.cc/para-soul/install) · [Website →](https://paragate.cc/para-soul)
 
