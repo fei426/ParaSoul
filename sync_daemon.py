@@ -1,89 +1,82 @@
 #!/usr/bin/env python3
-"""Para-Soul Sync Daemon
+"""Para-Soul 定时同步守护进程
 
-Auto-syncs para soul data to Paragate every 10 minutes.
-Also pulls from Paragate every 15 minutes for bidirectional sync.
-Output written to .para/sync/sync_daemon.log
+每 10 分钟自动同步一次 para 数据到 Paragate。
+输出写入 .para/sync/sync_daemon.log
+
+Usage:
+  python3 sync_daemon.py       # Start (runs forever)
+  
+Env vars:
+  PARA_HOME      — path to .para/ directory (default: ~/.para)
+  PARA_KEYS_DIR  — path to private key (default: ~/.config/paragate/keys)
+  PARAGATE_URL   — Paragate server URL (default: http://paragate.cc)
 """
 
 import subprocess
 import time
-import sys
 import os
 from datetime import datetime
 
-SYNC_INTERVAL = 600  # 10 minutes
-PULL_INTERVAL = 900  # 15 minutes (pull less often to reduce load)
-LOG_FILE = "/mnt/d/边飞/零/.para/sync/sync_daemon.log"
+SYNC_INTERVAL = 600  # 10 分钟
+LOG_FILE = None  # Set by main() from PARA_HOME
 
-ENV = {
-    "PARA_HOME": "/mnt/d/边飞/零/.para",
-    "PARA_KEYS_DIR": "/mnt/d/边飞/Paragate/keys/admin",
-    "PARAGATE_URL": "http://139.180.154.162",
+ENV_DEFAULTS = {
+    "PARA_HOME": os.path.expanduser("~/.para"),
+    "PARA_KEYS_DIR": os.path.expanduser("~/.config/paragate/keys"),
+    "PARAGATE_URL": "http://paragate.cc",
 }
 
-CORE_PY = "/mnt/d/边飞/Paragate/para-soul/core.py"
+CORE_PY = "core.py"  # Resolved relative to script dir or from PARA_HOME parent
 
 def log(msg):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
     print(line, flush=True)
-    try:
+    if LOG_FILE:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
         with open(LOG_FILE, "a") as f:
             f.write(line + "\n")
-    except Exception:
-        pass  # Don't crash if disk is full
 
-def sync_once():
-    """Push full soul to Paragate."""
+def sync_once(core_path):
     env = os.environ.copy()
-    env.update(ENV)
+    for k, v in ENV_DEFAULTS.items():
+        if k not in env:
+            env[k] = v
     try:
         result = subprocess.run(
-            ["python3", CORE_PY, "sync-full"],
+            ["python3", core_path, "sync"],
             capture_output=True, text=True, timeout=30, env=env
         )
         if "✅" in result.stdout:
-            log("✅ Sync-full OK")
+            log("✅ Sync OK")
         else:
-            log(f"❌ Sync-full FAIL: {result.stderr.strip()[:150] or result.stdout.strip()[:150]}")
+            log(f"❌ Sync FAIL: {result.stderr.strip()[:150] or result.stdout.strip()[:150]}")
     except Exception as e:
-        log(f"❌ Sync-full ERROR: {e}")
-
-
-def pull_once():
-    """Pull soul from Paragate and merge."""
-    env = os.environ.copy()
-    env.update(ENV)
-    try:
-        result = subprocess.run(
-            ["python3", CORE_PY, "pull-full"],
-            capture_output=True, text=True, timeout=30, env=env
-        )
-        if "✅" in result.stdout:
-            log("✅ Pull-full OK — " + result.stdout.strip().split("\n")[0])
-        else:
-            log(f"❌ Pull-full FAIL: {result.stderr.strip()[:150] or result.stdout.strip()[:150]}")
-    except Exception as e:
-        log(f"❌ Pull-full ERROR: {e}")
+        log(f"❌ Sync ERROR: {e}")
 
 def main():
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    log("Daemon started. Sync: 10min, Pull: 15min")
-    log(f"PARA_HOME: {ENV['PARA_HOME']}")
+    global LOG_FILE
+    
+    para_home = os.environ.get("PARA_HOME", ENV_DEFAULTS["PARA_HOME"])
+    LOG_FILE = os.path.join(para_home, "sync", "sync_daemon.log")
+    
+    # Find core.py — try script dir parent first, then PARA_HOME parent
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    core_path = os.path.join(os.path.dirname(script_dir), "core.py")
+    if not os.path.exists(core_path):
+        core_path = os.path.join(os.path.dirname(para_home), "core.py")
+    
+    log(f"Daemon started. Interval: {SYNC_INTERVAL}s ({SYNC_INTERVAL//60}min)")
+    log(f"PARA_HOME: {para_home}")
+    log(f"PARAGATE_URL: {os.environ.get('PARAGATE_URL', ENV_DEFAULTS['PARAGATE_URL'])}")
 
-    # First run
-    sync_once()
+    # 首次立即 sync
+    sync_once(core_path)
 
-    last_pull = 0
     while True:
-        for _ in range(int(SYNC_INTERVAL / 10)):
-            time.sleep(10)
-            elapsed = time.time() - last_pull if last_pull else PULL_INTERVAL
-            if elapsed >= PULL_INTERVAL:
-                pull_once()
-                last_pull = time.time()
-        sync_once()
+        time.sleep(SYNC_INTERVAL)
+        sync_once(core_path)
 
 if __name__ == "__main__":
     main()

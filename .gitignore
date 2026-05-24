@@ -6,3 +6,17 @@ __pycache__/
 *.db
 *.db-shm
 *.db-wal
+
+# Keys and secrets
+*.pem
+*.pem.pub
+private.pem
+keys/
+!templates/para-home/
+
+# Para soul data (never commit actual identity)
+.para/
+
+# OS files
+.DS_Store
+Thumbs.db
