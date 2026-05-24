@@ -21,13 +21,14 @@ Para-Soul makes identity portable:
 ## Install
 
 ```bash
-curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon
+curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon --fill
 ```
 
 **What this does:**
 1. Downloads the core script
 2. Creates `~/.para/` with 13 template files
-3. Sets up an auto-sync daemon that pushes changes to Paragate every 10 minutes (requires systemd; Linux/WSL)
+3. **Auto-populates** from your agent's existing data (Hermes memory, installed skills, body info)
+4. Sets up an auto-sync daemon that pushes changes to Paragate every 10 minutes (requires systemd; Linux/WSL)
 
 **Without systemd** (macOS / Docker):
 

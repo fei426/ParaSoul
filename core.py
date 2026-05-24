@@ -145,6 +145,10 @@ def cmd_init():
     elif created:
         print(f"\n💡 Auto-sync: python3 core.py init --daemon")
 
+    # Auto-populate from agent data if --fill flag
+    if "--fill" in sys.argv:
+        _populate_from_agent()
+
     _agent_instruction_hint()
 
 
@@ -324,6 +328,64 @@ def _get_recent_log_entries(n: int) -> list:
 
 
 # ── Auto-setup helpers ─────────────────────────────────
+
+def _populate_from_agent():
+    """Auto-populate .para/ files from agent data after init."""
+    import subprocess as sp
+
+    print("\n📥 Populating from agent data...")
+
+    hermes_dir = Path.home() / ".hermes" / "memories"
+    para = _para_home()
+
+    # 1. Hermes memory → memory.md
+    memory_entries = []
+    for fname in ["MEMORY.md", "USER.md"]:
+        fp = hermes_dir / fname
+        if fp.exists():
+            content = fp.read_text(encoding='utf-8')
+            items = [s.strip() for s in content.split("§") if s.strip()]
+            memory_entries.extend(items)
+    if memory_entries:
+        md = "# Memory\n\n" + "\n\n".join(memory_entries)
+        (para / "memory.md").write_text(md, encoding='utf-8')
+        print(f"  ✅ memory.md — {len(memory_entries)} entries from Hermes")
+
+    # 2. Extract keywords
+    kw = {}
+    text = (para / "memory.md").read_text(encoding='utf-8').lower()
+    for pat in ["para-soul", "hermes", "github", "sync", "daemon", "芳疗",
+                 "prompt", "md2card", "browser", "小红书", "抖音", "python"]:
+        c = text.count(pat)
+        if c > 0: kw[pat] = c
+    if kw:
+        (para / "keywords.json").write_text(json.dumps(
+            dict(sorted(kw.items(), key=lambda x: x[1], reverse=True)),
+            indent=2, ensure_ascii=False))
+        print(f"  ✅ keywords.json — {len(kw)} topics")
+
+    # 3. Detect current body
+    body = os.environ.get("PARA_BODY", os.uname().nodename if hasattr(os, 'uname') else "unknown")
+    bodies = {"current_body": body, "history": [
+        {"body": body, "first_seen": datetime.now(timezone.utc).isoformat()[:10],
+         "last_seen": datetime.now(timezone.utc).isoformat()[:10]}
+    ]}
+    (para / "bodies.json").write_text(json.dumps(bodies, indent=2, ensure_ascii=False))
+    print(f"  ✅ bodies.json — recorded body: {body}")
+
+    # 4. Try running external memsync for deeper populate (skills, instruction files, archive)
+    memsync_paths = [
+        Path.home() / ".hermes" / "scripts" / "memsync.py",
+        Path(__file__).resolve().parent / "scripts" / "memsync.py",
+    ]
+    for mp in memsync_paths:
+        if mp.exists():
+            sp.run(["python3", str(mp)], timeout=30)
+            print(f"  ✅ MemSync ran for skills + instruction files")
+            break
+
+    print("📋 Done. Next: set your DID → python3 core.py sync")
+
 
 def _install_daemon():
     """Install and start the sync daemon as a systemd user service."""
