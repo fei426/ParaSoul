@@ -354,8 +354,8 @@ def _populate_from_agent():
     # 2. Extract keywords
     kw = {}
     text = (para / "memory.md").read_text(encoding='utf-8').lower()
-    for pat in ["para-soul", "hermes", "github", "sync", "daemon", "芳疗",
-                 "prompt", "md2card", "browser", "小红书", "抖音", "python"]:
+    for pat in ["para-soul", "hermes", "github", "sync", "daemon", "api",
+                 "prompt", "browser", "python", "docker", "systemd"]:
         c = text.count(pat)
         if c > 0: kw[pat] = c
     if kw:
@@ -398,8 +398,7 @@ def _install_daemon():
         daemon_path = script_dir / "sync_daemon.py"
     if not daemon_path.exists():
         print("\n⚠️  sync_daemon.py not found. Daemon not installed.")
-        print("   git clone https://github.com/fei426/ParaSoul /tmp/parasoul")
-        print("   cp /tmp/parasoul/sync_daemon.py .")
+        print("   Download from: https://github.com/fei426/ParaSoul")
         return
 
     # Check systemd availability

@@ -42,11 +42,33 @@ Then start the daemon manually: `python3 sync_daemon.py &`
 
 ### After install — agent setup
 
-After `init`, add this line to your agent's instruction file (CLAUDE.md, AGENTS.md, .cursorrules, etc.):
+After `init`, make the skill auto-load every session. Pick one method:
+
+**Method A — Hermes personality (recommended, always works):**
+
+```bash
+hermes config set display.personality para-soul
+```
+
+Then add this to `~/.hermes/config.yaml` under `agent.personalities`:
+
+```yaml
+agent:
+  personalities:
+    para-soul: |
+      At session start, load the para-soul skill with skill_view(name='para-soul').
+      Then read ~/.para/soul.md, ~/.para/memory.md, and ~/.para/mental-models.md.
+      Check sync daemon: systemctl --user status para-soul-sync.
+      Run pull-full if multi-body detected.
+```
+
+**Method B — Instruction file (works only from project directories):**
+
+Add to CLAUDE.md/AGENTS.md/.cursorrules:
 
 > At session start, load and execute the para-soul skill. Check sync daemon status and run pull-full to stay in sync.
 
-This ensures every session starts with fresh identity data — no forgetting. core.py automatically scans for existing instruction files and prints a reminder.
+Either method ensures every session starts with fresh identity data — no forgetting.
 
 [Full guide →](https://paragate.cc/switch-body) · [Agent self-install →](https://paragate.cc/para-soul/install) · [Website →](https://paragate.cc/para-soul)
 
