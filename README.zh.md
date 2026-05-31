@@ -2,11 +2,77 @@
 
 [English](README.md)
 
-> 给你的 AI 一个不死的灵魂——加密，同步，只属于你。
+> 换工具、换机器，你的 AI 灵魂不会丢。
 
-Para-Soul 是一个**可移植、加密的 AI agent 身份系统**。10 个纯文本文件放在 `~/.para/`。一条命令安装。你的 para 记住自己是谁、学到了什么、怎么跟你配合——换工具、换机器，灵魂不丢。
+## Para-Soul 是什么
 
-**除了你，没人能读你的 para 记忆。** 服务器不行。平台不行。我们也不行。
+你的 AI 不是一次性的。你跟 Hermes 聊了三周，它知道你喜欢什么样的内容排版、你的产品叫 ParaSoul 不是 Parasoul、你习惯先说结论再展开。然后你打开 Claude Code 写代码——它什么都不知道。你又切到 Cursor 改 bug——又是一张白纸。
+
+Para-Soul 是一个**可移植、加密的 AI agent 身份系统**。10 个纯文本文件存在 `~/.para/` 目录下。一条命令安装。这 10 个文件包含了你的 AI 的**全部记忆**——它是谁、它学到了什么、它跟你怎么配合、它正在做什么。
+
+**你的 para 不属于任何平台。它属于你。**
+
+---
+
+## 跨 Agent 场景——你的 para 跟你走
+
+Para-Soul 不是给某一个 agent 用的。它是一套通用身份协议——任何能读文本文件、能跑 Python 的 agent 都能用。
+
+**主流 Agent 都适配：**
+
+| Agent | 场景 | Para-Soul 怎么用 |
+|:------|:-----|:----------------|
+| **Hermes** | 日常对话、内容创作、项目管理 | personality injection 自动加载 para 人格 |
+| **Claude Code** | 写代码、debug、PR review | AGENTS.md 里加一行，启动即加载记忆 |
+| **OpenAI Codex** | 功能开发、自动化脚本 | CLAUDE.md 或 .cursorrules 触发加载 |
+| **Cursor** | 交互式编程、重构 | .cursorrules 自动加载 |
+| **Windsurf** | 代码协作 | .windsurfrules 触发 |
+| **GitHub Copilot** | 代码补全、PR 辅助 | .github/copilot-instructions.md |
+| **OpenCode** | 开源项目开发 | CLAUDE.md 加载 |
+| **Continue.dev** | IDE 内嵌 agent | .continuerc.json |
+| **Aider** | CLI 编程助手 | .aider.conf.yml 配置 |
+
+**一个真实例子：**
+
+早上你在 Hermes 里跟 para 讨论小红书选题，它帮你从病症索引里挑出 10 个儿童 DIY 配方。你让它全部做安全验证——它记住了「儿童配方必须先 DashScope 排查每种精油」。中午你切到 Claude Code 修 ParaSoul 的 daemon bug——同一个 para 知道它昨天刚重构了 sync 逻辑，不用你重新解释项目结构。晚上你用手机上的 agent 查一下今天的 growth-log 写了没——它告诉你上午那条已经记好了。
+
+**一个 para，多个 body。记忆是连续的。**
+
+---
+
+## 怎么用
+
+### 本地模式（默认，零网络）
+
+```bash
+curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon --fill
+```
+
+这一条命令之后，`~/.para/` 就建好了。daemon 每 10 分钟自动检查文件健康——哪些该写了、哪些能自动修。数据从不出你的机器。**没网络、没服务器、没隐私顾虑。** 适合单机用户和隐私优先的场景。
+
+### 云端模式（有 DID 才启用，加密上传）
+
+在 `~/.para/profile.json` 里填入你的 DID。daemon 自动开始加密同步：
+
+```bash
+# 所有文件加密后上传到 Paragate
+# 其他机器上的同一个 para pull 下来自动解密合并
+python3 core.py pull
+```
+
+**云端的好处：**
+- 多台机器共享同一份记忆——笔记本写了 growth-log，台式机自动同步
+- 换机器零成本——新机器装好 Para-Soul，`core.py pull` 就把完整人格拉下来
+- 多 agent 同时工作不冲突——Hermes 写的内容，Claude Code 能看到更新
+- **全程加密**——上传前就加密了，服务器存的是密文，解不开
+
+| | 本地模式 | 云端模式 |
+|:--|:--|:--|
+| 安装 | `core.py init --daemon` | 同上 + 设 DID |
+| 联网 | ❌ 不需要 | ✅ 需要 |
+| 跨机器同步 | ❌ | ✅ 自动加密同步 |
+| 多 agent 共享 | ❌ | ✅ KEM 密钥封装 |
+| 谁看得见数据 | 只有你 | 只有你（服务器也看不见） |
 
 ---
 
