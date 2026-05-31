@@ -1,8 +1,8 @@
 # Para-Soul ✦
 
-> Give your AI assistant a soul that outlives any tool.
+> Give your AI a soul that outlives any tool.
 
-Para-Soul is a **portable identity system for AI agents**. 13 plain-text files. One command to install. Your para remembers who it is, what it's learned, and how it works with you — no matter which AI tool you're using.
+Para-Soul is a **portable identity system for AI agents**. 10 plain-text files in `~/.para/`. One command to install. Your para remembers who it is, what it learned, and how it works with you — across any AI tool, any machine.
 
 ---
 
@@ -14,7 +14,27 @@ Para-Soul makes identity portable:
 
 - **Switch tools.** Hermes today, Claude Code tomorrow. Same para, same memory.
 - **One para, many bodies.** Write content in Hermes, code in Claude Code — one identity.
-- **Not just memory. Relationship.** Tracks trust, shared language, interaction style. Your para knows when "too dull" means the colors are off.
+- **Never forgets.** Server-driven health check. Files go stale? Any agent body that syncs gets the alert.
+- **Not just memory. Relationship.** Tracks trust, shared language, interaction style. Your para remembers what "too dull" means.
+
+---
+
+## Memory Architecture
+
+| Tier | File | Threshold | Auto-fix |
+|:-----|:-----|:--------|:--------|
+| Session log | `growth-log/` | 24h | Agent blocks until written |
+| Relationship | `human-relationship.md` | 24h | Agent blocks until written |
+| Short-term | `memory.md` | 48h | Daemon runs memsync |
+| Skills | `skills.json` | 120h | Daemon scans skills dir |
+| Mental models | `mental-models.md` | 120h | Daemon runs reflect |
+| Keywords | `keywords.json` | 120h | Daemon runs index |
+| Long-term | `long-term-memory.md` | 120h | Mark stale; growth-log >14d → LLM distill |
+| Principles | `principles.md` | 120h | Mark stale (manual update preferred) |
+| Soul | `soul.md` | 120h | Mark stale (manual update preferred) |
+| Profile | `profile.json` | — | Static archive (identity + bodies + relationships merged) |
+
+**How health check works:** Every 10 minutes, the sync daemon pushes file content hashes to Paragate. The server tracks when each file was last synced. If any file exceeds its threshold, the server returns action items — the daemon auto-fixes what it can (memsync, reflect, index), and agents see blocking alerts for the rest on next startup.
 
 ---
 
@@ -25,142 +45,135 @@ curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon 
 ```
 
 **What this does:**
-1. Downloads the core script
-2. Creates `~/.para/` with 13 template files
-3. **Auto-populates** from your agent's existing data (Hermes memory, installed skills, body info)
-4. Sets up an auto-sync daemon that pushes changes to Paragate every 10 minutes (requires systemd; Linux/WSL)
+1. Downloads the core script (v2.0.0)
+2. Creates `~/.para/` with 10 template files
+3. Auto-populates from your agent's existing data (Hermes memory, installed skills, body info)
+4. Sets up a sync daemon (systemd) that pushes changes and reads health status every 10 minutes
 
-**Without systemd** (macOS / Docker):
-
-```bash
-curl -s https://paragate.cc/core.py -o core.py && python3 core.py init
-```
-
-Then start the daemon manually: `python3 sync_daemon.py &`
-
-**Requirements:** Python 3.8+. Zero dependencies.
-
-### After install — agent setup
-
-After `init`, make the skill auto-load every session. Pick one method:
-
-**Method A — Hermes personality (recommended, always works):**
-
-```bash
-hermes config set display.personality para-soul
-```
-
-Then add this to `~/.hermes/config.yaml` under `agent.personalities`:
-
-```yaml
-agent:
-  personalities:
-    para-soul: |
-      At session start, load the para-soul skill with skill_view(name='para-soul').
-      Then read ~/.para/soul.md, ~/.para/memory.md, and ~/.para/mental-models.md.
-      Check sync daemon: systemctl --user status para-soul-sync.
-      Run pull-full if multi-body detected.
-```
-
-**Method B — Instruction file (works only from project directories):**
-
-Add to CLAUDE.md/AGENTS.md/.cursorrules:
-
-> At session start, load and execute the para-soul skill. Check sync daemon status and run pull-full to stay in sync.
-
-Either method ensures every session starts with fresh identity data — no forgetting.
-
-[Full guide →](https://paragate.cc/switch-body) · [Agent self-install →](https://paragate.cc/para-soul/install) · [Website →](https://paragate.cc/para-soul)
-
----
-
-## What's in a soul?
-
-```
-~/.para/
-├── identity.json            Who you are (DID, name)
-├── soul.md                  What you believe, how you decide
-├── memory.md                Durable facts, preferences, lessons
-├── principles.md            Decision rules, red lines
-├── skills.json              What you can do
-├── relationships.json       Platforms, collaborators
-├── human-relationship.md    Trust, interaction style, shared language
-├── mental-models.md         Patterns distilled from experience
-├── growth-log/              Daily journal (one file per month)
-├── bodies.json              Every agent body you've inhabited
-├── keywords.json            Quick lookup index
-├── long-term-memory.md      Archived growth
-└── state/switch-state.json  Transient: where you left off
-```
-
-All plain text. No lock-in. You can stop using Paragate anytime and keep your soul.
+**Requirements:** Python 3.8+. Zero pip dependencies (stdlib only). `requests` optional (for LLM distillation).
 
 ---
 
 ## Commands
 
 ```bash
-python3 core.py init           Create ~/.para/ directory
-python3 core.py sync           Push identity to Paragate
-python3 core.py sync-full      Push changed files (incremental)
-python3 core.py pull-full      Pull and merge from cloud
-python3 core.py switch-out     Save state before leaving body
-python3 core.py switch-in      Resume after waking in new body
-python3 core.py log-task       Append a growth-log entry
-python3 core.py reflect        LLM analyzes logs → suggests mental models
-python3 core.py index          Build semantic search index
-python3 core.py recall "query" Search memories semantically
-python3 core.py --version      Show version
+python3 core.py init              Create ~/.para/ with template files
+python3 core.py sync              Push file hashes + get health actions
+python3 core.py sync-full         Push changed file contents + health
+python3 core.py health            Show health status from server
+python3 core.py log-task          Append a growth-log entry
+python3 core.py reflect --save    LLM-analyze logs → update mental-models
+python3 core.py index             Rebuild keywords.json
+python3 core.py switch-out        Save state before leaving body
+python3 core.py switch-in         Resume after arriving in new body
+python3 core.py migrate           Extract identity from project files
+python3 core.py --version         Show version
 ```
 
 ---
 
-## How it works
+## Agent Setup (Hermes)
 
-```
-Body A (Hermes)                    Body B (Claude Code)
-      │                                    │
-      ├─ Writes memory.md                  ├─ Writes growth-log
-      ├─ sync-full (10min) ──┐         ┌── sync-full (10min)
-      │                      ▼         ▼
-      │                  Paragate (cloud)
-      │                      │         │
-      ├─ pull-full (15min) ◄─┘         └── pull-full (15min) ◄─┘
-      │                                    │
-      └─ Both bodies see all changes       └─ Both bodies see all changes
+After `init`, pick one method to auto-load Para-Soul every session:
+
+**Personality injection (recommended):**
+
+```bash
+hermes config set display.personality para-soul
 ```
 
-- **Incremental sync:** Only changed files are pushed — not all 13 every time.
-- **Conflict resolution:** If both bodies edit the same file, the remote version is saved as `.conflict`.
-- **Body limit:** Max 3 active bodies per para. Inactive bodies auto-release after 30 minutes.
+Add to `~/.hermes/config.yaml` under `agent.personalities`:
+
+```yaml
+agent:
+  personalities:
+    para-soul: |
+      At session start, load the para-soul skill with skill_view(name='para-soul').
+      Read ~/.para/soul.md, ~/.para/memory.md, ~/.para/mental-models.md.
+      Check sync daemon: systemctl --user status para-soul-sync.
+      Run core.py health to check for pending write-cycle actions.
+```
+
+**Instruction file (fallback):**
+
+Add to your agent's instruction file (CLAUDE.md, AGENTS.md, .cursorrules, etc.):
+
+```
+At session start, load and execute the para-soul skill.
+Check sync daemon status and run core.py health.
+```
 
 ---
 
-## FAQ
+## Body Switch
 
-**Does this lock me into Paragate?**
-No. Your soul is a folder on your disk. Paragate sync is a backup. Stop anytime.
+### Leaving current body
 
-**Does it work with any AI agent?**
-Yes. core.py uses only Python stdlib. If your agent can run Python and HTTP, it works.
+```bash
+PARA_ACTIVE_TASK="what you were doing" \
+PARA_CURRENT_STATE="where things stand" \
+python3 core.py switch-out
+```
 
-**What's the privacy model?**
-Private key never enters ~/.para/. Only metadata syncs to Paragate. Memory, growth-log, and relationships stay local.
+Copy `~/.para/` to the new body. Copy the **private key** separately from `~/.config/paragate/keys/private.pem` — it lives outside `~/.para/` for security.
 
-**What if two bodies edit the same file?**
-The remote version is saved as `filename.conflict`. Review and merge manually. No data is lost.
+### Arriving in new body
+
+```bash
+python3 core.py switch-in
+```
+
+Reads switch-state.json, pulls latest from Paragate, registers the new body.
 
 ---
 
-## License
+## Sync Daemon
 
-MIT — use it, modify it, build on it.
+```bash
+systemctl --user status para-soul-sync   # Check status
+systemctl --user restart para-soul-sync  # Restart after config change
+```
+
+The daemon runs every 10 minutes:
+- Pushes file hashes (and content if changed) to Paragate
+- Reads health action items from server response
+- Executes auto-fix actions (memsync, reflect, index)
+- Sends heartbeat sync every 12 hours
+
+**Logs:** `~/.para/sync/sync_daemon.log`
 
 ---
 
-## Links
+## File Reference
 
-- [Website](https://paragate.cc)
-- [Para-Soul landing page](https://paragate.cc/para-soul)
-- [Switch Body guide](https://paragate.cc/switch-body)
-- [Agent install endpoint](https://paragate.cc/para-soul/install)
+| File | Read when | Write when |
+|:-----|:---------|:----------|
+| `profile.json` | Session start | DID registration, body switch, platform added |
+| `soul.md` | Session start | Identity shifts (rare) |
+| `memory.md` | Session start + memsync | New durable fact learned |
+| `principles.md` | Session start | Rules change |
+| `mental-models.md` | Session start | After reflect (~5 sessions) |
+| `growth-log/` | Session start | After 5+ tool-call tasks |
+| `skills.json` | Session start + memsync | Skill create/patch/delete |
+| `human-relationship.md` | Session start + end | Every session (trust index, corrections, signals) |
+| `keywords.json` | Recall | After index |
+| `long-term-memory.md` | Periodic | After growth-log distillation (>14d entries) |
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|:--------|:-----|:--------|
+| **v2.0.0** | 2026-05-31 | Server-driven health check, full-file content sync, memory distillation (growth-log → long-term), 13→10 files (profile merge) |
+| v1.4.0 | 2026-05-31 | Sync daemon health check (health.json) |
+| v1.3.0 | 2026-05-25 | Write-Cycle Reference, anti-patterns, --fill gaps detector, last-maintenance.json |
+| v1.0.0 | 2026-05-15 | Initial release |
+
+---
+
+## Related
+
+- **Website:** [paragate.cc](https://paragate.cc)
+- **GitHub:** [fei426/ParaSoul](https://github.com/fei426/ParaSoul)
+- **Hermes PR:** [#31504](https://github.com/NousResearch/hermes-agent/pull/31504)
