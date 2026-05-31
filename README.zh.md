@@ -81,6 +81,26 @@ python3 core.py pull   # 把其他机器的记忆拉到本地
 | 多 agent 共享 | ❌ | ✅ KEM 密钥封装 |
 | 谁看得见数据 | 你 | 你（服务器也看不见） |
 
+### 换新机器
+
+换了新电脑？三步恢复：
+
+```bash
+# 1. 新机器上安装 Para-Soul
+curl -s https://paragate.cc/core.py -o core.py && python3 core.py init
+
+# 2. 把旧机器的私钥拷过来
+#    旧机器: ~/.config/paragate/keys/private.pem
+#    → 新机器: 同样的路径
+#    ⚠️  这是你唯一需要手动转移的文件。
+#    没有它，任何人——包括你自己——都解不开云端的加密文件。
+
+# 3. 在 ~/.para/profile.json 里填上 DID，然后拉取
+python3 core.py pull
+```
+
+完整人格——记忆、偏好、思维模型、会话日志——全部回来了。私钥是你的唯一凭证。保管好它。
+
 ---
 
 ## 解决什么问题

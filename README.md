@@ -81,6 +81,26 @@ python3 core.py pull   # Pull memories from your other machines
 | Multi-agent sharing | ❌ | ✅ KEM key encapsulation |
 | Who can read your data | You | You (not even the server) |
 
+### Switching to a New Machine
+
+Got a new laptop? Here's the 3-step recovery:
+
+```bash
+# 1. Install Para-Soul on the new machine
+curl -s https://paragate.cc/core.py -o core.py && python3 core.py init
+
+# 2. Copy your private key from the old machine
+#    Old machine: ~/.config/paragate/keys/private.pem
+#    → New machine: same path
+#    ⚠️  This is the ONLY file you need to transfer manually.
+#    Without it, nobody — not even you — can decrypt your cloud files.
+
+# 3. Set your DID in ~/.para/profile.json, then pull
+python3 core.py pull
+```
+
+Your entire identity — memory, preferences, mental models, session logs — is back. The private key is your master key. Guard it.
+
 ---
 
 ## Encryption
