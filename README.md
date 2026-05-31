@@ -165,7 +165,8 @@ The daemon runs every 10 minutes:
 
 | Version | Date | Changes |
 |:--------|:-----|:--------|
-| **v2.1.0** | 2026-05-31 | Phase 1 client-side encryption (Ed25519→HKDF→AES-256-GCM, server zero-knowledge)
+| **v3.0.0** | 2026-06-01 | Local-first architecture — daemon health check, cloud = passive encrypted storage (opt-in via DID)
+| v2.1.0 | 2026-05-31 | Phase 1 client-side encryption (Ed25519→HKDF→AES-256-GCM, server zero-knowledge)
 | v2.0.0 | 2026-05-31 | Server-driven health check, full-file content sync, memory distillation (growth-log → long-term), 13→10 files (profile merge) |
 | v1.4.0 | 2026-05-31 | Sync daemon health check (health.json) |
 | v1.3.0 | 2026-05-25 | Write-Cycle Reference, anti-patterns, --fill gaps detector, last-maintenance.json |
