@@ -2,28 +2,84 @@
 
 [中文版](README.zh.md)
 
-> Give your AI a soul that outlives any tool — encrypted, synced, yours alone.
+> One command. Your AI remembers everything. Forever.
 
-Para-Soul is a **portable, encrypted identity system for AI agents**. 10 plain-text files in `~/.para/`. One command to install. Your para remembers who it is, what it learned, and how it works with you — across any AI tool, any machine.
+## What Para-Soul Is
 
-**Nobody can read your para's memory except you.** Not the server. Not the platform. Not us.
+Your AI isn't disposable. You spent two weeks in Claude Code tuning it to your exact code style. Then you open Cursor to fix an urgent bug — it doesn't even know your project structure. You switch to Hermes to write a design doc — blank slate again.
+
+Para-Soul fixes this. It's a **minimal, portable identity system for AI agents**. 10 plain-text files. One command. Zero configuration.
+
+Those 10 files hold everything your AI knows:
+- Who it is, how it talks to you
+- Your preferences — naming conventions, code style, pet peeves
+- Lessons learned — "that API uses v2, not v3"
+- Inside jokes — "make it faster" means the database queries, not the frontend
+
+**Your para doesn't belong to any platform. It belongs to you.**
 
 ---
 
-## Why Para-Soul
+## Cross-Agent — One Soul, Many Tools
 
-You've spent weeks shaping your AI. It knows your voice, your preferences, your inside jokes. Then you switch tools — and it forgets everything. Or worse: you realize the cloud service you trusted can read every word of your AI's evolving identity.
+Para-Soul is a universal identity protocol. Any agent that can run Python can use it.
 
-Para-Soul fixes both:
+**Supported agents:**
 
-| Problem | Solution |
-|:--------|:---------|
-| Switching tools loses identity | 10 portable files in `~/.para/` — any agent can read them |
-| Working across multiple machines | Encrypted cloud sync via Paragate (opt-in) |
-| Server can read your memories | **Client-side encryption.** Ed25519→HKDF→AES-256-GCM. Server stores ciphertext it cannot decrypt. |
-| Multiple agents share the same files | **KEM key encapsulation.** Each file has a random key, sealed to each authorized agent's X25519 public key. |
-| Forgetting to log growth | Daemon runs local health check every 10 min — auto-fixes what it can, marks what it can't |
-| Want to stay completely offline | **Local-first by default.** No DID, no sync, no network. Files stay on disk. |
+| Agent | Use Case | How to Connect |
+|:------|:-----|:-----|
+| **Hermes** | Chat, content, DevOps | Personality injection, auto-loads |
+| **Claude Code** | Development, debugging, code review | One line in AGENTS.md |
+| **OpenAI Codex** | Feature development, scripting | CLAUDE.md trigger |
+| **Cursor** | Interactive coding | .cursorrules auto-load |
+| **Windsurf** | Code collaboration | .windsurfrules |
+| **GitHub Copilot** | Code completion, PR assistance | .github/copilot-instructions.md |
+| **OpenCode** | Open-source projects | CLAUDE.md |
+| **Continue.dev** | In-IDE agent | .continuerc.json |
+| **Aider** | CLI coding | .aider.conf.yml |
+
+**A real day with Para-Soul:**
+
+Morning: you build a new feature in Claude Code. Your para remembers your API naming convention is snake_case, tests use pytest not unittest, and PR titles follow `feat(scope): description`. Afternoon: you switch to Cursor to fix a bug — the same memory auto-loads, so it knows not to touch the module you refactored yesterday. Evening: you ask Hermes for a summary — your para tells you how many lines you wrote and which bugs you fixed.
+
+**One soul, three tools. Zero context switching.**
+
+---
+
+## How to Use
+
+### Local Mode (default, zero dependencies)
+
+```bash
+curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon --fill
+```
+
+One command, and you're done:
+- `~/.para/` created, 10 files auto-populated
+- Daemon checks health every 10 minutes — auto-fixes what it can, flags what needs manual attention
+- **No network. No server. No signup.** Data never leaves your machine
+
+### Cloud Mode (encrypted sync, multi-machine)
+
+Set a DID in `profile.json`. The daemon encrypts and syncs automatically:
+
+```bash
+python3 core.py pull   # Pull memories from your other machines
+```
+
+**Why cloud:**
+- Laptop + desktop + server — same memory, auto-synced
+- Switching machines costs nothing — one command and your full identity is back
+- Multiple agents work without conflicts — Claude Code's updated preferences are visible to Cursor
+- **End-to-end encrypted** — files are encrypted before leaving your machine. The server stores ciphertext. Your memories, only your key can unlock them.
+
+| | Local Mode | Cloud Mode |
+|:--|:--|:--|
+| Install | `core.py init --daemon` | Same, plus set DID |
+| Network needed | ❌ | ✅ |
+| Multi-machine sync | ❌ | ✅ encrypted |
+| Multi-agent sharing | ❌ | ✅ KEM key encapsulation |
+| Who can read your data | You | You (not even the server) |
 
 ---
 
