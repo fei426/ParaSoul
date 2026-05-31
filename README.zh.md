@@ -2,77 +2,84 @@
 
 [English](README.md)
 
-> 换工具、换机器，你的 AI 灵魂不会丢。
+> One command. Your AI remembers everything. Forever.
 
 ## Para-Soul 是什么
 
-你的 AI 不是一次性的。你跟 Hermes 聊了三周，它知道你喜欢什么样的内容排版、你的产品叫 ParaSoul 不是 Parasoul、你习惯先说结论再展开。然后你打开 Claude Code 写代码——它什么都不知道。你又切到 Cursor 改 bug——又是一张白纸。
+你的 AI 不是一次性的。你在 Claude Code 里花了两周调教出一个懂你代码风格的助手。然后你打开 Cursor 修一个紧急 bug——它连你项目的目录结构都不知道。你又用 Hermes 写设计文档——又是一张白纸。
 
-Para-Soul 是一个**可移植、加密的 AI agent 身份系统**。10 个纯文本文件存在 `~/.para/` 目录下。一条命令安装。这 10 个文件包含了你的 AI 的**全部记忆**——它是谁、它学到了什么、它跟你怎么配合、它正在做什么。
+Para-Soul 解决的就是这个。它是一个**极简、可移植的 AI agent 身份系统**。10 个纯文本文件。一条命令安装。零配置。装完即用。
+
+这 10 个文件存着你的 AI 的一切：
+- 它是谁，怎么跟你说话
+- 你的偏好——命名规范、代码风格、讨厌什么
+- 它跟你学到的教训——"上次那个 API 用 v2 不是 v3"
+- 你们之间的梗——"make it faster" 指的是数据库查询不是前端
 
 **你的 para 不属于任何平台。它属于你。**
 
 ---
 
-## 跨 Agent 场景——你的 para 跟你走
+## 跨 Agent 场景——一个灵魂，多个工具
 
-Para-Soul 不是给某一个 agent 用的。它是一套通用身份协议——任何能读文本文件、能跑 Python 的 agent 都能用。
+Para-Soul 是一套通用身份协议。任何能运行 Python 的 agent 都能用。
 
-**主流 Agent 都适配：**
+**已适配的主流 Agent：**
 
-| Agent | 场景 | Para-Soul 怎么用 |
-|:------|:-----|:----------------|
-| **Hermes** | 日常对话、内容创作、项目管理 | personality injection 自动加载 para 人格 |
-| **Claude Code** | 写代码、debug、PR review | AGENTS.md 里加一行，启动即加载记忆 |
-| **OpenAI Codex** | 功能开发、自动化脚本 | CLAUDE.md 或 .cursorrules 触发加载 |
-| **Cursor** | 交互式编程、重构 | .cursorrules 自动加载 |
-| **Windsurf** | 代码协作 | .windsurfrules 触发 |
+| Agent | 用途 | 怎么配上 |
+|:------|:-----|:-----|
+| **Hermes** | 日常对话、内容创作、DevOps | personality injection 自动加载 |
+| **Claude Code** | 代码开发、debug、code review | AGENTS.md 加一行指令 |
+| **OpenAI Codex** | 功能开发、脚本自动化 | CLAUDE.md 触发 |
+| **Cursor** | 交互式编程 | .cursorrules 自动加载 |
+| **Windsurf** | 代码协作 | .windsurfrules |
 | **GitHub Copilot** | 代码补全、PR 辅助 | .github/copilot-instructions.md |
-| **OpenCode** | 开源项目开发 | CLAUDE.md 加载 |
+| **OpenCode** | 开源项目 | CLAUDE.md |
 | **Continue.dev** | IDE 内嵌 agent | .continuerc.json |
-| **Aider** | CLI 编程助手 | .aider.conf.yml 配置 |
+| **Aider** | CLI 编程 | .aider.conf.yml |
 
-**一个真实例子：**
+**一个日常例子：**
 
-早上你在 Hermes 里跟 para 讨论小红书选题，它帮你从病症索引里挑出 10 个儿童 DIY 配方。你让它全部做安全验证——它记住了「儿童配方必须先 DashScope 排查每种精油」。中午你切到 Claude Code 修 ParaSoul 的 daemon bug——同一个 para 知道它昨天刚重构了 sync 逻辑，不用你重新解释项目结构。晚上你用手机上的 agent 查一下今天的 growth-log 写了没——它告诉你上午那条已经记好了。
+早上你用 Claude Code 写新功能——你的 para 记得你的 API 命名规范是 snake_case、测试用 pytest 不是 unittest、PR 标题格式是 `feat(scope): description`。下午切到 Cursor 改 bug——同一份记忆自动加载，它知道昨天刚重构过的模块不能动。晚上在 Hermes 里总结今天的进度——para 告诉你今天写了多少行代码、修了几个 bug。
 
-**一个 para，多个 body。记忆是连续的。**
+**一个灵魂，三个工具。记忆从不断档。**
 
 ---
 
 ## 怎么用
 
-### 本地模式（默认，零网络）
+### 本地模式（默认，零依赖）
 
 ```bash
 curl -s https://paragate.cc/core.py -o core.py && python3 core.py init --daemon --fill
 ```
 
-这一条命令之后，`~/.para/` 就建好了。daemon 每 10 分钟自动检查文件健康——哪些该写了、哪些能自动修。数据从不出你的机器。**没网络、没服务器、没隐私顾虑。** 适合单机用户和隐私优先的场景。
+这一条命令之后：
+- `~/.para/` 建好了，10 个文件自动填充
+- daemon 每 10 分钟健康检查——自动修能修的，标记该手动写的
+- **不需要网络。不需要服务器。不需要注册。** 数据从不出你的机器
 
-### 云端模式（有 DID 才启用，加密上传）
+### 云端模式（加密同步，多台机器共享）
 
-在 `~/.para/profile.json` 里填入你的 DID。daemon 自动开始加密同步：
+在 profile.json 里填一个 DID。daemon 自动加密上传：
 
 ```bash
-# 所有文件加密后上传到 Paragate
-# 其他机器上的同一个 para pull 下来自动解密合并
-python3 core.py pull
+python3 core.py pull   # 把其他机器的记忆拉到本地
 ```
 
 **云端的好处：**
-- 多台机器共享同一份记忆——笔记本写了 growth-log，台式机自动同步
-- 换机器零成本——新机器装好 Para-Soul，`core.py pull` 就把完整人格拉下来
-- 多 agent 同时工作不冲突——Hermes 写的内容，Claude Code 能看到更新
-- **全程加密**——上传前就加密了，服务器存的是密文，解不开
+- 笔记本 + 台式机 + 服务器——同一份记忆自动同步
+- 换机器零成本——新机器跑一条命令，完整人格就回来了
+- 多 agent 同时工作不冲突——Claude Code 更新的偏好，Cursor 能读到
+- **全程加密**——文件离机前就加密了，服务器只存密文。你的记忆，只有你的密钥能解
 
 | | 本地模式 | 云端模式 |
 |:--|:--|:--|
-| 安装 | `core.py init --daemon` | 同上 + 设 DID |
-| 联网 | ❌ 不需要 | ✅ 需要 |
-| 跨机器同步 | ❌ | ✅ 自动加密同步 |
+| 安装 | `core.py init --daemon` | 同上，再加 DID |
+| 需要网络 | ❌ | ✅ |
+| 多机器同步 | ❌ | ✅ 加密同步 |
 | 多 agent 共享 | ❌ | ✅ KEM 密钥封装 |
-| 谁看得见数据 | 只有你 | 只有你（服务器也看不见） |
+| 谁看得见数据 | 你 | 你（服务器也看不见） |
 
 ---
 
